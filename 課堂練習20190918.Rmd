@@ -14,6 +14,7 @@ theme_set(theme_classic())
 knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
 ```
 
+# 1.1
 ```{r}
 StuList <- list(
   次序=c(1,2,3,4,5,6,7,8),
@@ -36,5 +37,233 @@ StuDF <- data.frame(
   成績=c(80,42,90,82,50,77,30,90)
   )
 StuDF 
+```
+
+```{r}
+class(StuDF)
+typeof(StuDF)
+```
+
+```{r}
+class(StuList)
+typeof(StuList)
+```
+
+```{r}
+length(StuDF) # 從向量角度看(從list中看有幾個項目)
+nrow(StuDF) # 從矩陣角度看
+ncol(StuDF)
+```
+
+# 1.2 dplyr
+```{r}
+library(dplyr)
+```
+
+```{r}
+str(StuDF) # 檢查變數結構
+head(StuDF)
+tail(StuDF)
+```
+
+## 1.2.1 slice
+```{r}
+StuDF
+slice(StuDF,1:3)
+slice(StuDF,4:5)
+slice(StuDF,n()) # 顯示最後一筆
+```
+
+最後2筆
+```{r}
+slice(StuDF,7:8) # 要先知道總個數
+slice(StuDF,(n()-1):n()) # 較好的答案
+```
+
+```{r}
+StuDF
+slice(StuDF,-5:-7) # 5.6.7個不要
+slice(StuDF,-(5:7)) # 不要5到7(較好的答案)
+slice(StuDF,c(-5,-6,-7))
+```
+
+只要1,4,8
+```{r}
+slice(StuDF,c(1,4,8))
+```
+
+練習
+```{r}
+library(readr)
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+```
+
+```{r}
+# 檢查變數結構
+str(collegeData)
+# 顯示前4筆，後3筆，中間第101到110筆
+slice(collegeData,c(1:4,(n()-2):n(),101:110)) %>% View
+```
+
+## 1.2.2 mutate(產生變數)
+```{r}
+StuDF
+mutate(StuDF,
+       調分後成績=成績+10) %>% View
+transmute(StuDF,
+       調分後成績=成績+10) %>% View # 不保留其他變數
+```
+
+```{r}
+StuDF
+mutate(StuDF,
+       調分後成績=成績+10) -> StuDF
+```
+
+```{r}
+# 不使用dplyr則必需使用$取出變數向量
+StuDF$調分後成績 <-
+  StuDF$成績+10
+```
+
+練習
+```{r}
+# 新增變數男生(用dplyr)
+mutate(collegeData,
+       男生=一年級男生+二年級男生+三年級男生+四年級男生) -> collegeData
+# 新增變數女生(不用dplyr)
+collegeData$女生 <- collegeData$一年級女生+collegeData$二年級女生+collegeData$三年級女生+collegeData$四年級女生
+
+# 新增變數男女生比
+mutate(collegeData,男女生比=男生/女生) -> collegeData
+```
+
+```{r} 
+mutate(collegeData,
+       男生=一年級男生+二年級男生+三年級男生+四年級男生,
+       女生=一年級女生+二年級女生+三年級女生+四年級女生,
+       男女生比=男生/女生
+       )
+```
+
+## 1.2.3 summarise(計算特徵值)
+```{r}
+StuDF
+summarise(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績)) %>% View
+```
+
+```{r}
+mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績)) # 若把summarise改成mutate?
+```
+
+練習
+```{r}
+mutate(StuDF,
+       平均成績=mean(成績),
+       最高分=max(成績),
+       最低分=min(成績),
+       調分成績=成績+(最高分-最低分)/5
+)
+```
+
+## 1.2.4 select(選擇變數)
+```{r}
+StuDF
+mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績)) -> StuDF2
+```
+
+```{r}
+StuDF2
+names(StuDF2) # 顯示物件內元素名稱
+select(StuDF2,
+       姓名,學號,成績,調分後成績) %>% View
+select(StuDF2,
+       -次序,-性別,-最高分,-最低分) %>% View
+```
+
+```{r}
+select(StuDF2,
+       次序,性別,
+       contains("最")) %>% View # contains():選出有...的選項
+
+select(StuDF2,
+       -次序,-性別,
+       -contains("最"))
+```
+
+```{r}
+select(collegeData,
+       contains("男生")) # 選出collegeData中所有男生變數
+```
+
+## 1.2.5 filter(條件選取觀測值)
+```{r}
+StuDF
+# logical vector
+logiChoose <- c(
+  F,F,F,T,T,F,T,F
+)
+# 使用logical vector選擇所要觀測值"女"
+StuDF[logiChoose,] %>% View
+```
+
+補充: which()可顯示向量元素為真的位置
+```{r}
+logiChoose
+which(logiChoose)
+slice(
+  StuDF,which(logiChoose)
+) %>% View
+```
+
+```{r}
+StuDF$性別=="女" # logical predicate
+
+logiChoose <- StuDF$性別=="女"
+StuDF[logiChoose,]
+```
+
+女性，且成績大於60
+```{r}
+# relational operators
+StuDF$性別=="女" 
+StuDF$成績>60
+
+# combined with logical operator
+(StuDF$性別=="女" & StuDF$成績>60) -> logiChoose2
+logiChoose2
+
+StuDF[logiChoose2,] %>% View
+```
+
+補充: 使用filter(data frame, logical predicates)
+```{r}
+StuDF
+filter(StuDF,
+       性別=="女")
+filter(StuDF,
+       (性別=="女" & 成績>60))
+filter(StuDF,
+       性別=="女",
+       成績>60) # 多個AND條件可用,分隔
+```
+
+練習
+```{r}
+# 縣市名稱為“30 臺北市”
+filter(collegeData,
+       縣市名稱=="30 臺北市") %>% View
+# 縣市名稱為“30 臺北市”或“01 新北市”。（使用OR|或belong to %in%）
+filter(collegeData,
+       縣市名稱=="30 臺北市" | 縣市名稱=="01 新北市")
 ```
 
