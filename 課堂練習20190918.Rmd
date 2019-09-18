@@ -264,6 +264,26 @@ filter(collegeData,
        縣市名稱=="30 臺北市") %>% View
 # 縣市名稱為“30 臺北市”或“01 新北市”。（使用OR|或belong to %in%）
 filter(collegeData,
-       縣市名稱=="30 臺北市" | 縣市名稱=="01 新北市")
+       縣市名稱=="30 臺北市" | 縣市名稱=="01 新北市") %>% View
+filter(collegeData,
+       縣市名稱 %in% c("30 臺北市","01 新北市")
+```
+
+##1.2.6 group_by(分群計算)
+```{r}
+group_by(StuDF,
+         性別) -> StuDF_by性別
+
+# 使用grouped data frame
+summarise(StuDF_by性別,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+
+# 使用ungrouped data frame
+summarise(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
 ```
 
